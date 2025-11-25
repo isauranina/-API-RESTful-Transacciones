@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="DTOs\Redecon\**" />
+    <Compile Remove="Interfaces\IRepositories\Redecon\**" />
+    <Compile Remove="Interfaces\IServices\Redecon\**" />
+    <Compile Remove="Services\Redecon\**" />
+    <Compile Remove="Models\Redecon\**" />
+    <EmbeddedResource Remove="DTOs\Redecon\**" />
+    <EmbeddedResource Remove="Interfaces\IRepositories\Redecon\**" />
+    <EmbeddedResource Remove="Interfaces\IServices\Redecon\**" />
+    <EmbeddedResource Remove="Services\Redecon\**" />
+    <EmbeddedResource Remove="Models\Redecon\**" />
+    <None Remove="DTOs\Redecon\**" />
+    <None Remove="Interfaces\IRepositories\Redecon\**" />
+    <None Remove="Interfaces\IServices\Redecon\**" />
+    <None Remove="Services\Redecon\**" />
+    <None Remove="Models\Redecon\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="13.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.13" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="6.0.0-preview.4.21253.5" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.11" />
+    <PackageReference Include="Novell.Directory.Ldap.NETStandard" Version="4.0.0" />
+    <PackageReference Include="QRCoder" Version="1.6.0" />
+    <PackageReference Include="QuestPDF" Version="2025.1.5" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="7.3.1" />
+    <PackageReference Include="System.ServiceModel.NetTcp" Version="8.1.2" />
+  </ItemGroup>
+
+</Project>
+
