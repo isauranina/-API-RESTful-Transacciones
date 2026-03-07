@@ -25,4 +25,4 @@ jobs:
     - name: Build
       run: dotnet build --no-restore
     - name: Test
-      run: dotnet test --no-build Transacciones.Tests --verbosity normal
+      run: dotnet test --no-build src/Transacciones.Tests --verbosity normal
