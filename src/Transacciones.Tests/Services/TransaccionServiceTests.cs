@@ -44,7 +44,7 @@ public class TransaccionServiceTests
     public async Task ProcesarRetiroAsync_ConSaldoInsuficiente_DeberiaLanzarSaldoInsuficienteException()
     {
         // Arrange
-        var cuentaId = 1;
+        var cuentaId = 6;
         var saldoDisponible = 100m;
         var montoRetiro = 200m;
 
@@ -91,7 +91,7 @@ public class TransaccionServiceTests
         {
             Id = cuentaId,
             Saldo = 1000m,
-            Activa = true,
+            Activa = false,
             NumeroCuenta = "123456",
             Titular = "Test User"
         };
