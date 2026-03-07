@@ -24,5 +24,6 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore
-    - name: Test
-      run: dotnet test --no-build src/Transacciones.Tests --verbosity normal
+      - name: Test
+      # se añade log para test
+      run: dotnet test src/Transacciones.Tests --no-build --verbosity normal --logger trx --results-directory TestResults
