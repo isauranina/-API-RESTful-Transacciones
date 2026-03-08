@@ -1,9 +1,14 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+	  <!-- Roslyn analyzers -->
+	  <EnableNETAnalyzers>true</EnableNETAnalyzers>
+	  <AnalysisLevel>latest</AnalysisLevel>
+	
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,10 +27,6 @@
     <None Remove="Interfaces\IServices\Redecon\**" />
     <None Remove="Services\Redecon\**" />
     <None Remove="Models\Redecon\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Remove="Services\Transacciones\TransaccionService.cs" />
   </ItemGroup>
 
   <ItemGroup>

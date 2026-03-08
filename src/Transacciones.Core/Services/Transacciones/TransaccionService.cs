@@ -9,256 +9,222 @@ using Transacciones.Core.Interfaces.IServices.Transacciones;
 
 namespace Transacciones.Core.Services.Transacciones;
 
-public class TransaccionService : ITransaccionService
-{
-    private readonly ITransaccionRepository _transaccionRepository;
-    private readonly ICuentaRepository _cuentaRepository;
-    private readonly IMapper _mapper;
-    private readonly ITransaccionesDbContext _context;
+public class TransaccionService : ITransaccionService {
+	private readonly ITransaccionRepository _transaccionRepository;
+	private readonly ICuentaRepository _cuentaRepository;
+	private readonly IMapper _mapper;
+	private readonly ITransaccionesDbContext _context;
 
-    public TransaccionService(
-        ITransaccionRepository transaccionRepository,
-        ICuentaRepository cuentaRepository,
-        IMapper mapper,
-        ITransaccionesDbContext context)
-    {
-        _transaccionRepository = transaccionRepository;
-        _cuentaRepository = cuentaRepository;
-        _mapper = mapper;
-        _context = context;
-    }
+	public TransaccionService(
+		ITransaccionRepository transaccionRepository,
+		ICuentaRepository cuentaRepository,
+		IMapper mapper,
+		ITransaccionesDbContext context) {
+		_transaccionRepository = transaccionRepository;
+		_cuentaRepository = cuentaRepository;
+		_mapper = mapper;
+		_context = context;
+	}
 
-    public async Task<TransaccionDto> ProcesarAbonoAsync(CrearAbonoDto crearAbonoDto)
-    {
-        // Iniciar transacción explícita de base de datos
-        using var transaction = await _context.BeginTransactionAsync();
-        
-        try
-        {
-            // Obtener la cuenta
-            var cuenta = await _cuentaRepository.GetByIdAsync(crearAbonoDto.CuentaId);
-            if (cuenta == null)
-            {
-                throw new CuentaNoEncontradaException(crearAbonoDto.CuentaId);
-            }
+	public async Task<TransaccionDto> ProcesarAbonoAsync(CrearAbonoDto crearAbonoDto) {
+		// Iniciar transacción explícita de base de datos
+		using var transaction = await _context.BeginTransactionAsync();
 
-            // Verificar que la cuenta esté activa
-            if (!cuenta.Activa)
-            {
-                throw new CuentaInactivaException("el abono");
-            }
+		try {
+			// Obtener la cuenta
+			var cuenta = await _cuentaRepository.GetByIdAsync(crearAbonoDto.CuentaId);
+			if (cuenta == null) {
+				throw new CuentaNoEncontradaException(crearAbonoDto.CuentaId);
+			}
 
-            // Validar que el monto sea mayor a cero
-            if (crearAbonoDto.Monto <= 0)
-            {
-                throw new MontoInvalidoException("abonar");
-            }
+			// Verificar que la cuenta esté activa
+			if (!cuenta.Activa) {
+				throw new CuentaInactivaException("el abono");
+			}
 
-            // Calcular nuevos saldos
-            decimal saldoAnterior = cuenta.Saldo;
-            decimal saldoNuevo = saldoAnterior + crearAbonoDto.Monto;
+			// Validar que el monto sea mayor a cero
+			if (crearAbonoDto.Monto <= 0) {
+				throw new MontoInvalidoException("abonar");
+			}
 
-            // Validación: No permitir saldos negativos en ningún momento
-            if (saldoNuevo < 0)
-            {
-                throw new SaldoNegativoException("el abono");
-            }
+			// Calcular nuevos saldos
+			decimal saldoAnterior = cuenta.Saldo;
+			decimal saldoNuevo = saldoAnterior + crearAbonoDto.Monto;
 
-            // Crear la transacción con FechaTransaccion = fecha actual
-            var transaccion = new Transaccion
-            {
-                CuentaId = crearAbonoDto.CuentaId,
-                TipoTransaccion = TipoTransaccion.Abono,
-                Monto = crearAbonoDto.Monto,
-                Descripcion = crearAbonoDto.Descripcion,
-                FechaTransaccion = DateTime.UtcNow,
-                SaldoAnterior = saldoAnterior,
-                SaldoNuevo = saldoNuevo
-            };
+			// Validación: No permitir saldos negativos en ningún momento
+			if (saldoNuevo < 0) {
+				throw new SaldoNegativoException("el abono");
+			}
 
-            // Actualizar el saldo de la cuenta
-            cuenta.Saldo = saldoNuevo;
+			// Crear la transacción con FechaTransaccion = fecha actual
+			var transaccion = new Transaccion {
+				CuentaId = crearAbonoDto.CuentaId,
+				TipoTransaccion = TipoTransaccion.Abono,
+				Monto = crearAbonoDto.Monto,
+				Descripcion = crearAbonoDto.Descripcion,
+				FechaTransaccion = DateTime.UtcNow,
+				SaldoAnterior = saldoAnterior,
+				SaldoNuevo = saldoNuevo
+			};
 
-            // Guardar cambios dentro de la transacción de base de datos
-            await _transaccionRepository.CreateAsync(transaccion);
-            await _cuentaRepository.UpdateAsync(cuenta);
+			// Actualizar el saldo de la cuenta
+			cuenta.Saldo = saldoNuevo;
 
-            // Confirmar transacción (COMMIT)
-            await transaction.CommitAsync();
+			// Guardar cambios dentro de la transacción de base de datos
+			await _transaccionRepository.CreateAsync(transaccion);
+			await _cuentaRepository.UpdateAsync(cuenta);
 
-            return _mapper.Map<TransaccionDto>(transaccion);
-        }
-        catch
-        {
-            // Revertir transacción (ROLLBACK) en caso de error
-            await transaction.RollbackAsync();
-            throw;
-        }
-    }
+			// Confirmar transacción (COMMIT)
+			await transaction.CommitAsync();
 
-    public async Task<TransaccionDto> ProcesarRetiroAsync(CrearRetiroDto crearRetiroDto)
-    {
-        // Iniciar transacción explícita de base de datos
-        using var transaction = await _context.BeginTransactionAsync();
-        
-        try
-        {
-            // Obtener la cuenta
-            var cuenta = await _cuentaRepository.GetByIdAsync(crearRetiroDto.CuentaId);
-            if (cuenta == null)
-            {
-                throw new CuentaNoEncontradaException(crearRetiroDto.CuentaId);
-            }
+			return _mapper.Map<TransaccionDto>(transaccion);
+		} catch {
+			// Revertir transacción (ROLLBACK) en caso de error
+			await transaction.RollbackAsync();
+			throw;
+		}
+	}
 
-            // Validar que la cuenta esté activa
-            if (!cuenta.Activa)
-            {
-                throw new CuentaInactivaException("el retiro");
-            }
+	public async Task<TransaccionDto> ProcesarRetiroAsync(CrearRetiroDto crearRetiroDto) {
+		// Iniciar transacción explícita de base de datos
+		using var transaction = await _context.BeginTransactionAsync();
 
-            // Validar que el monto sea mayor a cero
-            if (crearRetiroDto.Monto <= 0)
-            {
-                throw new MontoInvalidoException("retirar");
-            }
+		try {
+			// Obtener la cuenta
+			var cuenta = await _cuentaRepository.GetByIdAsync(crearRetiroDto.CuentaId);
+			if (cuenta == null) {
+				throw new CuentaNoEncontradaException(crearRetiroDto.CuentaId);
+			}
 
-            // Calcular nuevos saldos
-            decimal saldoAnterior = cuenta.Saldo;
-            
-            // Validar que el saldo disponible sea suficiente antes de retiros
-            if (saldoAnterior < crearRetiroDto.Monto)
-            {
-                throw new SaldoInsuficienteException(saldoAnterior, crearRetiroDto.Monto);
-            }
+			// Validar que la cuenta esté activa
+			if (!cuenta.Activa) {
+				throw new CuentaInactivaException("el retiro");
+			}
 
-            decimal saldoNuevo = saldoAnterior - crearRetiroDto.Monto;
+			// Validar que el monto sea mayor a cero
+			if (crearRetiroDto.Monto <= 0) {
+				throw new MontoInvalidoException("retirar");
+			}
 
-            // Validación: No permitir que el saldo quede negativo
-            if (saldoNuevo < 0)
-            {
-                throw new SaldoNegativoException("el retiro");
-            }
+			// Calcular nuevos saldos
+			decimal saldoAnterior = cuenta.Saldo;
 
-            // Formatear descripción según el formato especificado: 'Se retiro un monto de {monto}, saldo anterior{monto}, saldo actual es {monto}'
-            string descripcion = $"Se retiro un monto de {crearRetiroDto.Monto}, saldo anterior {saldoAnterior}, saldo actual es {saldoNuevo}";
+			// Validar que el saldo disponible sea suficiente antes de retiros
+			if (saldoAnterior < crearRetiroDto.Monto) {
+				throw new SaldoInsuficienteException(saldoAnterior, crearRetiroDto.Monto);
+			}
 
-            // Crear la transacción con FechaTransaccion = fecha actual
-            var transaccion = new Transaccion
-            {
-                CuentaId = crearRetiroDto.CuentaId,
-                TipoTransaccion = TipoTransaccion.Retiro,
-                Monto = crearRetiroDto.Monto,
-                Descripcion = descripcion,
-                FechaTransaccion = DateTime.UtcNow,
-                SaldoAnterior = saldoAnterior,
-                SaldoNuevo = saldoNuevo
-            };
+			decimal saldoNuevo = saldoAnterior - crearRetiroDto.Monto;
 
-            // Actualizar el saldo de la cuenta
-            cuenta.Saldo = saldoNuevo;
+			// Validación: No permitir que el saldo quede negativo
+			if (saldoNuevo < 0) {
+				throw new SaldoNegativoException("el retiro");
+			}
 
-            // Guardar cambios dentro de la transacción de base de datos
-            await _transaccionRepository.CreateAsync(transaccion);
-            await _cuentaRepository.UpdateAsync(cuenta);
+			// Formatear descripción según el formato especificado: 'Se retiro un monto de {monto}, saldo anterior{monto}, saldo actual es {monto}'
+			string descripcion = $"Se retiro un monto de {crearRetiroDto.Monto}, saldo anterior {saldoAnterior}, saldo actual es {saldoNuevo}";
 
-            // Confirmar transacción (COMMIT)
-            await transaction.CommitAsync();
+			// Crear la transacción con FechaTransaccion = fecha actual
+			var transaccion = new Transaccion {
+				CuentaId = crearRetiroDto.CuentaId,
+				TipoTransaccion = TipoTransaccion.Retiro,
+				Monto = crearRetiroDto.Monto,
+				Descripcion = descripcion,
+				FechaTransaccion = DateTime.UtcNow,
+				SaldoAnterior = saldoAnterior,
+				SaldoNuevo = saldoNuevo
+			};
 
-            return _mapper.Map<TransaccionDto>(transaccion);
-        }
-        catch
-        {
-            // Revertir transacción (ROLLBACK) en caso de error
-            await transaction.RollbackAsync();
-            throw;
-        }
-    }
+			// Actualizar el saldo de la cuenta
+			cuenta.Saldo = saldoNuevo;
 
-    public async Task<TransaccionDto> ProcesarTransaccionAsync(CrearTransaccionDto crearTransaccionDto)
-    {
-        // Iniciar transacción explícita
-        using var transaction = await _context.BeginTransactionAsync();
-        
-        try
-        {
-            // Obtener la cuenta con bloqueo pesimista para evitar condiciones de carrera
-            var cuenta = await _cuentaRepository.GetByIdAsync(crearTransaccionDto.CuentaId);
-            if (cuenta == null)
-            {
-                throw new CuentaNoEncontradaException(crearTransaccionDto.CuentaId);
-            }
+			// Guardar cambios dentro de la transacción de base de datos
+			await _transaccionRepository.CreateAsync(transaccion);
+			await _cuentaRepository.UpdateAsync(cuenta);
 
-            if (!cuenta.Activa)
-            {
-                throw new CuentaInactivaException("la transacción");
-            }
+			// Confirmar transacción (COMMIT)
+			await transaction.CommitAsync();
 
-            // Validar tipo de transacción
-            if (crearTransaccionDto.TipoTransaccion != TipoTransaccion.Abono &&
-                crearTransaccionDto.TipoTransaccion != TipoTransaccion.Retiro)
-            {
-                throw new TipoTransaccionInvalidoException(crearTransaccionDto.TipoTransaccion);
-            }
+			return _mapper.Map<TransaccionDto>(transaccion);
+		} catch {
+			// Revertir transacción (ROLLBACK) en caso de error
+			await transaction.RollbackAsync();
+			throw;
+		}
+	}
 
-            // Validar monto
-            if (crearTransaccionDto.Monto <= 0)
-            {
-                throw new MontoInvalidoException("procesar");
-            }
+	public async Task<TransaccionDto> ProcesarTransaccionAsync(CrearTransaccionDto crearTransaccionDto) {
+		// Iniciar transacción explícita
+		using var transaction = await _context.BeginTransactionAsync();
 
-            // Calcular nuevos saldos
-            decimal saldoAnterior = cuenta.Saldo;
-            decimal saldoNuevo;
+		try {
+			// Obtener la cuenta con bloqueo pesimista para evitar condiciones de carrera
+			var cuenta = await _cuentaRepository.GetByIdAsync(crearTransaccionDto.CuentaId);
+			if (cuenta == null) {
+				throw new CuentaNoEncontradaException(crearTransaccionDto.CuentaId);
+			}
 
-            if (crearTransaccionDto.TipoTransaccion == TipoTransaccion.Abono)
-            {
-                saldoNuevo = saldoAnterior + crearTransaccionDto.Monto;
-            }
-            else // RETIRO
-            {
-                if (saldoAnterior < crearTransaccionDto.Monto)
-                {
-                    throw new SaldoInsuficienteException(saldoAnterior, crearTransaccionDto.Monto);
-                }
-                saldoNuevo = saldoAnterior - crearTransaccionDto.Monto;
-            }
+			if (!cuenta.Activa) {
+				throw new CuentaInactivaException("la transacción");
+			}
 
-            // Validación: No permitir saldos negativos en ningún momento
-            if (saldoNuevo < 0)
-            {
-                throw new SaldoNegativoException("la transacción");
-            }
+			// Validar tipo de transacción
+			if (crearTransaccionDto.TipoTransaccion != TipoTransaccion.Abono &&
+				crearTransaccionDto.TipoTransaccion != TipoTransaccion.Retiro) {
+				throw new TipoTransaccionInvalidoException(crearTransaccionDto.TipoTransaccion);
+			}
 
-            // Crear la transacción
-            var transaccion = _mapper.Map<Transaccion>(crearTransaccionDto);
-            transaccion.SaldoAnterior = saldoAnterior;
-            transaccion.SaldoNuevo = saldoNuevo;
+			// Validar monto
+			if (crearTransaccionDto.Monto <= 0) {
+				throw new MontoInvalidoException("procesar");
+			}
 
-            // Actualizar el saldo de la cuenta
-            cuenta.Saldo = saldoNuevo;
+			// Calcular nuevos saldos
+			decimal saldoAnterior = cuenta.Saldo;
+			decimal saldoNuevo;
 
-            // Guardar cambios dentro de la transacción
-            await _transaccionRepository.CreateAsync(transaccion);
-            await _cuentaRepository.UpdateAsync(cuenta);
+			if (crearTransaccionDto.TipoTransaccion == TipoTransaccion.Abono) {
+				saldoNuevo = saldoAnterior + crearTransaccionDto.Monto;
+			} else // RETIRO
+			  {
+				if (saldoAnterior < crearTransaccionDto.Monto) {
+					throw new SaldoInsuficienteException(saldoAnterior, crearTransaccionDto.Monto);
+				}
+				saldoNuevo = saldoAnterior - crearTransaccionDto.Monto;
+			}
 
-            // Confirmar transacción
-            await transaction.CommitAsync();
+			// Validación: No permitir saldos negativos en ningún momento
+			if (saldoNuevo < 0) {
+				throw new SaldoNegativoException("la transacción");
+			}
 
-            return _mapper.Map<TransaccionDto>(transaccion);
-        }
-        catch
-        {
-            // Revertir transacción en caso de error
-            await transaction.RollbackAsync();
-            throw;
-        }
-    }
+			// Crear la transacción
+			var transaccion = _mapper.Map<Transaccion>(crearTransaccionDto);
+			transaccion.SaldoAnterior = saldoAnterior;
+			transaccion.SaldoNuevo = saldoNuevo;
 
-    public async Task<IEnumerable<TransaccionDto>> GetByCuentaIdAsync(int cuentaId)
-    {
-        var transacciones = await _transaccionRepository.GetByCuentaIdAsync(cuentaId);
-        return _mapper.Map<IEnumerable<TransaccionDto>>(transacciones);
-    }
+			// Actualizar el saldo de la cuenta
+			cuenta.Saldo = saldoNuevo;
+
+			// Guardar cambios dentro de la transacción
+			await _transaccionRepository.CreateAsync(transaccion);
+			await _cuentaRepository.UpdateAsync(cuenta);
+
+			// Confirmar transacción
+			await transaction.CommitAsync();
+
+			return _mapper.Map<TransaccionDto>(transaccion);
+		} catch {
+			// Revertir transacción en caso de error
+			await transaction.RollbackAsync();
+			throw;
+		}
+	}
+
+	public async Task<IEnumerable<TransaccionDto>> GetByCuentaIdAsync(int cuentaId) {
+		var transacciones = await _transaccionRepository.GetByCuentaIdAsync(cuentaId);
+		return _mapper.Map<IEnumerable<TransaccionDto>>(transacciones);
+	}
 }
 
 
