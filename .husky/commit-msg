@@ -1,0 +1,7 @@
+#!/bin/sh
+echo "Ejecutando commit-msg"
+echo "Usa:chore para tares,feat:agregar endpoint,fix:Corregir errores.. ver mas detalle en commitlint.config.js"
+
+echo "commit-msg: $1"
+# npx --no -- commitlint --edit "$1"
+node_modules/.bin/commitlint --edit "$1"
