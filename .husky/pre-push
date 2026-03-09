@@ -1,6 +1,2 @@
-#!/bin/sh
-
-. "$(dirname "$0")/_/husky.sh"
-
 echo "Ejecutando tests (Transacciones.Tests)..."
 dotnet test src/Transacciones.Tests/Transacciones.Tests.csproj --verbosity normal
