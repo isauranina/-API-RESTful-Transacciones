@@ -26,6 +26,6 @@
     "lint-staged": "^15.5.2"
   },
   "lint-staged": {
-    "{Transacciones.API,Transacciones.Core}/**/*.cs": "dotnet format TransaccionesAPI.sln  --include"
+    "*.cs": "node scripts/format-cs.js"
   }
 }
