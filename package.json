@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prepare": "husky"
+    "prepare": "husky",
+    "format:staged": "lint-staged"
   },
   "repository": {
     "type": "git",
@@ -21,6 +22,10 @@
   "devDependencies": {
     "@commitlint/cli": "^19.6.0",
     "@commitlint/config-conventional": "^19.6.0",
-    "husky": "^9.1.7"
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.2"
+  },
+  "lint-staged": {
+    "{Transacciones.API,Transacciones.Core}/**/*.cs": "dotnet format TransaccionesAPI.sln  --include"
   }
 }

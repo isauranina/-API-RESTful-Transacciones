@@ -1,10 +1,1 @@
-
-echo "Ejecutando husky dotnet format según .editorconfig"
-  dotnet format --verify-no-changes
-
-#activar para que formatee automaticamente el codigo segun las reglas del .editorconfig
-#  echo "Se esta ejecutando el formateando código con dotnet format según .editorconfig..."
- # dotnet format
-
-#activar para añadir los cambios al commit
-# git add .
+npx lint-staged
