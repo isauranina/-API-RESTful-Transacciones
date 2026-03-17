@@ -59,9 +59,7 @@ jobs:
         -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover,cobertura
 
     - name: Sonarcloud end
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
+      run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
     - name: Restore dotnet tools
       # Se asume que reportgenerator está en el manifiesto local del proyecto
