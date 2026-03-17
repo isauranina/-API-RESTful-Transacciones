@@ -46,13 +46,11 @@ jobs:
       run: dotnet restore
 
     - name: Sonarcloud start
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: |
         dotnet sonarscanner begin \
         /k:"isauranina_-API-RESTful-Transacciones" \
         /o:"Isaura" \
-        /d:sonar.token="$SONAR_TOKEN" \
+        /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
         /d:sonar.host.url="https://sonarcloud.io" \
         /d:sonar.cs.opencover.reportsPaths="coverage/**/coverage.opencover.xml" \
         /d:sonar.qualitygate.wait=true
