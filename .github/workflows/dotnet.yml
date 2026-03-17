@@ -30,8 +30,6 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
-        
-		
 		
     - name: Cache SonarQube Cloud packages
       uses: actions/cache@v4
@@ -49,8 +47,8 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: >
         dotnet sonarscanner begin 
-        /k:"jmacboy_pruebagitflow2026" 
-        /o:"jmacboy" 
+        /k:"isauranina_-API-RESTful-Transacciones" 
+        /o:"Isaura" 
         /d:sonar.token="$SONAR_TOKEN"
         /d:sonar.cs.opencover.reportsPaths="coverage/**/coverage.opencover.xml"
         /d:sonar.qualitygate.wait=true
@@ -60,11 +58,11 @@ jobs:
  
     - name: Build
       run: dotnet build --no-restore
- 
+
     - name: Test
       run: >
           dotnet test --no-build 
-          --verbosity normal Inventory.Test 
+          --verbosity normal src/Transacciones.Tests 
           --collect:"XPlat Code Coverage" 
           --results-directory ./coverage
           -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover,cobertura
