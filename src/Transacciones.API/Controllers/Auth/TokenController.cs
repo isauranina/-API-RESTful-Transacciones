@@ -37,8 +37,7 @@ public class TokenController : ControllerBase {
 
 		var secretKey =
 			Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
-			?? _configuration["Bearer:SecretKey"]
-			?? throw new InvalidOperationException("La clave secreta JWT no está configurada.");
+			?? throw new InvalidOperationException("La clave secreta JWT no está configurada. Define la variable de entorno JWT_SECRET_KEY.");
 
 		var tokenHandler = new JwtSecurityTokenHandler();
 		var byteKey = Encoding.UTF8.GetBytes(secretKey);
