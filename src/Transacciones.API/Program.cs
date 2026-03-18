@@ -72,15 +72,16 @@ builder.Services.AddDbContext<TransaccionesDbContext>(options =>
 
 builder.Services.AddCors(options => options.AddPolicy("CorsPolicy", builder =>
 		builder
-		.WithOrigins("http://localhost:4200", "*")
-		.AllowAnyMethod()
-		.AllowAnyHeader()
-		.AllowCredentials()));
+			.WithOrigins("http://localhost:4200", "*")
+			.AllowAnyMethod()
+			.AllowAnyHeader()
+			.AllowCredentials()));
 
-
-// Obtener la clave secreta desde appsettings.json en producion se usara variables de entorno
-var jwtSecretKey = builder.Configuration["Bearer:SecretKey"]
-	?? throw new InvalidOperationException("La clave secreta JWT no está configurada en appsettings.json");
+// Obtener la clave secreta de entorno (JWT_SECRET_KEY) o, en desarrollo, de appsettings / user-secrets
+var jwtSecretKey =
+	Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
+	?? builder.Configuration["Bearer:SecretKey"]
+	?? throw new InvalidOperationException("La clave secreta JWT no está configurada. Define JWT_SECRET_KEY o Bearer:SecretKey.");
 
 builder.Services.AddAuthentication("Bearer")
 				.AddJwtBearer("Bearer", options => {

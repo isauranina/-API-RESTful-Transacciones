@@ -21,12 +21,24 @@ public class TokenController : ControllerBase {
 	[HttpPost("generate")]
 	[AllowAnonymous]
 	public IActionResult GenerateToken([FromBody] TokenRequest request) {
-		if (request.User != "admin" || request.Password != "Clave*") {
+		var adminUser =
+			Environment.GetEnvironmentVariable("AUTH_ADMIN_USER")
+			?? _configuration["Auth:AdminUser"]
+			?? throw new InvalidOperationException("Credenciales de administrador no configuradas.");
+
+		var adminPassword =
+			Environment.GetEnvironmentVariable("AUTH_ADMIN_PASSWORD")
+			?? _configuration["Auth:AdminPassword"]
+			?? throw new InvalidOperationException("Credenciales de administrador no configuradas.");
+
+		if (request.User != adminUser || request.Password != adminPassword) {
 			return Unauthorized(new { error = "Credenciales inválidas" });
 		}
 
-		var secretKey = _configuration["Bearer:SecretKey"]
-			?? throw new InvalidOperationException("debes agregar SecretKey en appsettings.json");
+		var secretKey =
+			Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
+			?? _configuration["Bearer:SecretKey"]
+			?? throw new InvalidOperationException("La clave secreta JWT no está configurada.");
 
 		var tokenHandler = new JwtSecurityTokenHandler();
 		var byteKey = Encoding.UTF8.GetBytes(secretKey);
