@@ -39,12 +39,13 @@ jobs:
         key: ${{ runner.os }}-sonar
         restore-keys: ${{ runner.os }}-sonar
 
-    - name: Install SonarQube Cloud scanner
-      if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'      
-      run: dotnet tool install --global dotnet-sonarscanner
-    
     - name: Add dotnet tools to PATH
       run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+
+    - name: Install/Update SonarQube Cloud scanner
+      # El cache es solo de ~/.sonar/cache; el tool global no viene del cache.
+      # Aseguramos que exista dotnet-sonarscanner aunque haya cache-hit.
+      run: dotnet tool update --global dotnet-sonarscanner || dotnet tool install --global dotnet-sonarscanner
 
     - name: Restore dependencies
       run: dotnet restore
