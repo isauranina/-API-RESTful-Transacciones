@@ -40,9 +40,11 @@ jobs:
         restore-keys: ${{ runner.os }}-sonar
 
     - name: Install SonarQube Cloud scanner
-      if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
-      # Se cambia a instalación global para poder usar el comando directamente
+      if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'      
       run: dotnet tool install --global dotnet-sonarscanner
+    
+    - name: Add dotnet tools to PATH
+      run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
 
     - name: Restore dependencies
       run: dotnet restore
@@ -50,7 +52,7 @@ jobs:
     - name: Sonarcloud start
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: dotnet sonarscanner begin /k:"isauranina_-API-RESTful-Transacciones" /o:"isauranina" /d:sonar.token="$SONAR_TOKEN" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.opencover.reportsPaths="coverage/**/coverage.opencover.xml" /d:sonar.cs.cobertura.reportsPaths="coverage/**/coverage.cobertura.xml"
+      run: dotnet-sonarscanner begin /k:"isauranina_-API-RESTful-Transacciones" /o:"isauranina" /d:sonar.token="$SONAR_TOKEN" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.opencover.reportsPaths="coverage/**/coverage.opencover.xml" /d:sonar.cs.cobertura.reportsPaths="coverage/**/coverage.cobertura.xml"
       # /d:sonar.qualitygate.wait=true
       
     - name: Build
@@ -67,7 +69,7 @@ jobs:
     - name: Sonarcloud end
       env:
        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
+      run: dotnet-sonarscanner end /d:sonar.token="$SONAR_TOKEN"
 
     - name: Restore dotnet tools
       # Se asume que reportgenerator está en el manifiesto local del proyecto
