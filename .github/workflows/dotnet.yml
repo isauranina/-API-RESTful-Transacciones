@@ -1,7 +1,4 @@
-# This workflow will build a .NET project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
-
-name: Build and Test
+name: Start SonarCloud analysis
 
 on:
   push:
@@ -18,7 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+        fetch-depth: 0
     
     - name: Set up JDK 17
       uses: actions/setup-java@v4
@@ -32,7 +29,7 @@ jobs:
         dotnet-version: 8.0.x
         
     - name: Cache SonarQube Cloud packages
-      id: cache-sonar-scanner # ¡Este ID faltaba!
+      id: cache-sonar-scanner
       uses: actions/cache@v4
       with:
         path: ~/.sonar/cache
@@ -43,8 +40,6 @@ jobs:
       run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
 
     - name: Install/Update SonarQube Cloud scanner
-      # El cache es solo de ~/.sonar/cache; el tool global no viene del cache.
-      # Aseguramos que exista dotnet-sonarscanner aunque haya cache-hit.
       run: dotnet tool update --global dotnet-sonarscanner || dotnet tool install --global dotnet-sonarscanner
 
     - name: Restore dependencies
@@ -53,8 +48,15 @@ jobs:
     - name: Sonarcloud start
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: dotnet-sonarscanner begin /k:"isauranina_-API-RESTful-Transacciones" /o:"isauranina" /d:sonar.token="$SONAR_TOKEN" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.opencover.reportsPaths="coverage/**/coverage.opencover.xml" /d:sonar.cs.cobertura.reportsPaths="coverage/**/coverage.cobertura.xml"
-      # /d:sonar.qualitygate.wait=true
+      # Lo he puesto en formato multilínea (\) para que sea más fácil de leer
+      run: |
+        dotnet-sonarscanner begin \
+          /k:"isauranina_-API-RESTful-Transacciones" \
+          /o:"isauranina" \
+          /d:sonar.token="$SONAR_TOKEN" \
+          /d:sonar.host.url="https://sonarcloud.io" \
+          /d:sonar.cs.opencover.reportsPaths="coverage/**/coverage.opencover.xml" \
+          /d:sonar.cs.cobertura.reportsPaths="coverage/**/coverage.cobertura.xml"
       
     - name: Build
       run: dotnet build --no-restore
@@ -69,11 +71,10 @@ jobs:
 
     - name: Sonarcloud end
       env:
-       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: dotnet-sonarscanner end /d:sonar.token="$SONAR_TOKEN"
 
     - name: Restore dotnet tools
-      # Se asume que reportgenerator está en el manifiesto local del proyecto
       run: dotnet tool restore
 
     - name: Generate coverage report
