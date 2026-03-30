@@ -25,6 +25,7 @@ jobs:
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
+          timeout: 5m
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           envs: JWT_SECRET_KEY,MSSQL_SA_PASSWORD
           script: |
