@@ -6,8 +6,8 @@ services:
     container_name: transacciones-api
     restart: unless-stopped
     depends_on:
-      sqlserver:
-        condition: service_healthy
+      - sqlserver
+       # condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: "Production"
       ASPNETCORE_URLS: "http://+:5035"
@@ -28,10 +28,10 @@ services:
       - "1433:1433"
     healthcheck:
       test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-U", "sa", "-P", "${MSSQL_SA_PASSWORD}", "-Q", "SELECT 1"]
-      interval: 15s
-      timeout: 10s # Espera 10 seg por la respuesta
-      retries: 15 # Intenta hasta 15 veces (3-4 minutos de margen total)
-      start_period: 90s  # <--- CRÍTICO: No lo marques como "unhealthy" durante los primeros 40s
+      interval: 30s
+      timeout: 20s # Espera 10 seg por la respuesta
+      retries: 10 # Intenta hasta 15 veces (3-4 minutos de margen total)
+      start_period: 150s  # <--- CRÍTICO: No lo marques como "unhealthy" durante los primeros 40s
     volumes:
       - sqlserver_data:/var/opt/mssql ##
 
