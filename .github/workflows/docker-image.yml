@@ -7,19 +7,20 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Reload server via SSH
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to DigitalOcean
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           timeout: 5m
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          ports:
-            -"80:8080"
+          port: 22
           envs: JWT_SECRET_KEY,MSSQL_SA_PASSWORD
           script: |
-            export JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
-            export MSSQL_SA_PASSWORD=${{ secrets.MSSQL_SA_PASSWORD }}
+            export JWT_SECRET_KEY="${{ secrets.JWT_SECRET_KEY }}"
+            export MSSQL_SA_PASSWORD="${{ secrets.MSSQL_SA_PASSWORD }}"
             bash /home/buildapp/deploy.sh
