@@ -2,7 +2,8 @@
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 USER app
 WORKDIR /app
-EXPOSE 5035
+EXPOSE 8080
+EXPOSE 8081
 
 # This stage is used to build the service project
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
@@ -32,12 +33,17 @@ RUN dotnet publish "./src/Transacciones.API/Transacciones.API.csproj" \
   -o /app/publish \
   --no-restore
 
-# This stage is used in production
+  # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 WORKDIR /app
-ENV ASPNETCORE_ENVIRONMENT=Production
-ENV ASPNETCORE_URLS=http://0.0.0.0:5035
-
 COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "Inventory.WebApi.dll"]
 
-ENTRYPOINT ["dotnet", "Transacciones.API.dll"]
+# This stage is used in production
+#FROM base AS final
+#WORKDIR /app
+#ENV ASPNETCORE_ENVIRONMENT=Production
+#ENV ASPNETCORE_URLS=http://0.0.0.0:5035
+#·COPY --from=publish /app/publish .
+
+#ENTRYPOINT ["dotnet", "Transacciones.API.dll"]
