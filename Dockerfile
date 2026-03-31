@@ -36,6 +36,8 @@ RUN dotnet publish "./src/Transacciones.API/Transacciones.API.csproj" \
   # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 WORKDIR /app
+# FORZAR EL PUERTO 5035
+ENV ASPNETCORE_URLS=http://+:5035
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "Transacciones.API.dll"]
 
