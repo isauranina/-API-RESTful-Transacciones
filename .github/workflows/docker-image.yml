@@ -14,16 +14,16 @@ jobs:
 
       - name: Deploy to DigitalOcean
         uses: appleboy/ssh-action@v1
+        env:
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          MSSQL_SA_PASSWORD: ${{ secrets.MSSQL_SA_PASSWORD }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           timeout: 5m
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
           envs: JWT_SECRET_KEY,MSSQL_SA_PASSWORD
           script: |
-            export JWT_SECRET_KEY="${{ secrets.JWT_SECRET_KEY }}"
-            export MSSQL_SA_PASSWORD="${{ secrets.MSSQL_SA_PASSWORD }}"
             bash /home/buildapp/deploy.sh
 
 
