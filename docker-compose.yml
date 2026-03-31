@@ -1,32 +1,32 @@
-name: Docker Image CI
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: transacciones-api
+    restart: unless-stopped
+    depends_on:
+      - sqlserver
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://0.0.0.0:5035
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Define JWT_SECRET_KEY in .env (see .env.example)}
+      ConnectionStrings__TransaccionesConnection: Server=sqlserver,1433;Database=DB_TRANSACCIONES;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;
+    ports:
+      - "80:5035"
 
-on:
-  push:
-    branches: [ "main" ]
-jobs:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: transacciones-sqlserver
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Define MSSQL_SA_PASSWORD in .env (see .env.example)}
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
 
-  build:
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Configure Deploy SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
-
-      - name: Reload server
-        uses: appleboy/ssh-action@v1
-        env:
-          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-          MSSQL_SA_PASSWORD: ${{ secrets.MSSQL_SA_PASSWORD }}
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          timeout: 5m 
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: JWT_SECRET_KEY,MSSQL_SA_PASSWORD
-          script: |
-            bash /home/buildapp/deploy.sh
+volumes:
+  sqlserver_data:
