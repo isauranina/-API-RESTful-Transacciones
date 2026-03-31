@@ -119,7 +119,7 @@ builder.Services.AddAuthorization(options => {
 		.Build();
 });
 
-// builder.WebHost.UseUrls("http://0.0.0.0:5032");
+ builder.WebHost.UseUrls("http://0.0.0.0:5032");
 
 var app = builder.Build();
 
