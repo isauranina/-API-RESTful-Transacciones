@@ -37,7 +37,7 @@ RUN dotnet publish "./src/Transacciones.API/Transacciones.API.csproj" \
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "Inventory.WebApi.dll"]
+ENTRYPOINT ["dotnet", "Transacciones.API.dll"]
 
 # This stage is used in production
 #FROM base AS final
