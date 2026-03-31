@@ -17,7 +17,6 @@ services:
       - "80:5035"
 
   sqlserver:
-    image: mcr.microsoft.com/dotnet/aspnet:9.0-alpine AS base # Usa la imagen de SQL Server
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: transacciones-sqlserver
     restart: unless-stopped
