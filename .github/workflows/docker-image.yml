@@ -24,6 +24,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           envs: JWT_SECRET_KEY,MSSQL_SA_PASSWORD
           script: |
+            export JWT_SECRET_KEY="${{ secrets.JWT_SECRET_KEY }}"
+            export MSSQL_SA_PASSWORD="${{ secrets.MSSQL_SA_PASSWORD }}"
             bash /home/buildapp/deploy.sh
 
 
