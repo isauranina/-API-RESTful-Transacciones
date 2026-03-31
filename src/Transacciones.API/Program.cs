@@ -134,7 +134,7 @@ if (app.Environment.IsDevelopment()) {
 	app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+//pp.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
