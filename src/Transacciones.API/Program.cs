@@ -119,7 +119,7 @@ builder.Services.AddAuthorization(options => {
 		.Build();
 });
 
- builder.WebHost.UseUrls("http://0.0.0.0:5032");
+ builder.WebHost.UseUrls("http://0.0.0.0:5035");
 
 var app = builder.Build();
 
@@ -138,15 +138,15 @@ app.UseSwaggerUI(options => {
 });
 //}
 
-pp.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-if (app.Environment.IsProduction()) {
-	AppContext.SetSwitch("System.Net.Http.UseSocketsHttpHandler", false);
-	app.Urls.Add("http://0.0.0.0:5035");
+//if (app.Environment.IsProduction()) {
+//	AppContext.SetSwitch("System.Net.Http.UseSocketsHttpHandler", false);
+//	app.Urls.Add("http://0.0.0.0:5035");
 
-}
+//}
 
 app.Run();
