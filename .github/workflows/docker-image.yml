@@ -14,8 +14,10 @@ jobs:
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
+          timeout: 5m
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22 # Asegúrate de que sea el puerto de tu Droplet
+          ports:
+            -"80:8080"
           envs: JWT_SECRET_KEY,MSSQL_SA_PASSWORD
           script: |
             export JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
