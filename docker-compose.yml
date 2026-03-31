@@ -33,7 +33,7 @@ services:
       retries: 10 # Reintentamos 10 veces en lugar de 5
       start_period: 70s  # <--- CRÍTICO: No lo marques como "unhealthy" durante los primeros 40s
     volumes:
-      - sqlserver_data:/var/opt/mssql #
+      - sqlserver_data:/var/opt/mssql ##
 
 volumes:
   sqlserver_data:
