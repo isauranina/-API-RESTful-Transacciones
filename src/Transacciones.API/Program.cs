@@ -119,7 +119,7 @@ builder.Services.AddAuthorization(options => {
 		.Build();
 });
 
- builder.WebHost.UseUrls("http://0.0.0.0:5035");
+builder.WebHost.UseUrls("http://0.0.0.0:5035");
 
 var app = builder.Build();
 
@@ -134,7 +134,7 @@ app.UseSwagger();
 //app.UseSwaggerUI();
 app.UseSwaggerUI(options => {
 	options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
-	options.RoutePrefix = string.Empty; // Esto permite ver Swagger en http://tu-ip/
+	options.RoutePrefix = string.Empty;
 });
 //}
 
