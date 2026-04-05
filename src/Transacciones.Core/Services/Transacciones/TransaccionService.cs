@@ -51,11 +51,6 @@ public class TransaccionService : ITransaccionService {
 			decimal saldoAnterior = cuenta.Saldo;
 			decimal saldoNuevo = saldoAnterior + crearAbonoDto.Monto;
 
-			// Validación: No permitir saldos negativos en ningún momento
-			if (saldoNuevo < 0) {
-				throw new SaldoNegativoException("el abono");
-			}
-
 			// Crear la transacción con FechaTransaccion = fecha actual
 			var transaccion = new Transaccion {
 				CuentaId = crearAbonoDto.CuentaId,
@@ -115,11 +110,6 @@ public class TransaccionService : ITransaccionService {
 			}
 
 			decimal saldoNuevo = saldoAnterior - crearRetiroDto.Monto;
-
-			// Validación: No permitir que el saldo quede negativo
-			if (saldoNuevo < 0) {
-				throw new SaldoNegativoException("el retiro");
-			}
 
 			// Formatear descripción según el formato especificado: 'Se retiro un monto de {monto}, saldo anterior{monto}, saldo actual es {monto}'
 			string descripcion = $"Se retiro un monto de {crearRetiroDto.Monto}, saldo anterior {saldoAnterior}, saldo actual es {saldoNuevo}";
@@ -193,13 +183,9 @@ public class TransaccionService : ITransaccionService {
 				saldoNuevo = saldoAnterior - crearTransaccionDto.Monto;
 			}
 
-			// Validación: No permitir saldos negativos en ningún momento
-			if (saldoNuevo < 0) {
-				throw new SaldoNegativoException("la transacción");
-			}
-
 			// Crear la transacción
 			var transaccion = _mapper.Map<Transaccion>(crearTransaccionDto);
+			transaccion.FechaTransaccion = DateTime.UtcNow; // Asegurar que la fecha de transacción se establezca
 			transaccion.SaldoAnterior = saldoAnterior;
 			transaccion.SaldoNuevo = saldoNuevo;
 
@@ -226,6 +212,3 @@ public class TransaccionService : ITransaccionService {
 		return _mapper.Map<IEnumerable<TransaccionDto>>(transacciones);
 	}
 }
-
-
-
