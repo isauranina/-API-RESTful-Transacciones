@@ -88,7 +88,7 @@ public class TransaccionServiceAbonoTests {
 	}
 
 	[Fact]
-	public async Task ProcesarAbonoAsync_CuentaConSaldoNegativo_DeberiaLanzarSaldoNegativoException() {
+	public async Task ProcesarAbonoAsync_MontoCeroOInferior_DeberiaLanzarMontoInvalidoException() {
 		// Arrange
 		var cuentaId = 1;
 		var cuenta = new Cuenta {
@@ -101,7 +101,7 @@ public class TransaccionServiceAbonoTests {
 
 		var dto = new CrearAbonoDto {
 			CuentaId = cuentaId,
-			Monto = 50m,
+			Monto = 0,
 			Descripcion = "Abono de prueba"
 		};
 
@@ -110,10 +110,9 @@ public class TransaccionServiceAbonoTests {
 			.ReturnsAsync(cuenta);
 
 		// Act & Assert
-		await Assert.ThrowsAsync<SaldoNegativoException>(() => _transaccionService.ProcesarAbonoAsync(dto));
+		await Assert.ThrowsAsync<MontoInvalidoException>(() => _transaccionService.ProcesarAbonoAsync(dto));
 
 		_transactionMock.Verify(x => x.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
 		_transactionMock.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
 	}
 }
-
