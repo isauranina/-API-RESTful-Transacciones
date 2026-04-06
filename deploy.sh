@@ -33,11 +33,11 @@ echo "services:
       interval: 30s
       timeout: 20s # Espera 10 seg por la respuesta
       retries: 10 # Intenta hasta 15 veces (3-4 minutos de margen total)
-      start_period: 150s  # <--- CRÍTICO: No lo marques como "unhealthy" durante los primeros 40s
+      start_period: 150s  # <--- No lo marques como "unhealthy" durante los primeros 150s
     volumes:
       - sqlserver_data:/var/opt/mssql ##
 
 volumes:
   sqlserver_data:
-" > docker-compose.yml
-docker docker-compose up -d
+" > compose.yml
+docker compose up -d
