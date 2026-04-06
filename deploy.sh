@@ -1,43 +1,51 @@
 #!/bin/bash
-hostname=$(curl http://169.254.169.254/metadata/v1/hostname)
-mkdir -p /home/deploy
+hostname=$(curl -s http://169.254.169)
+
+sudo mkdir -p /home/deploy
 cd /home/deploy
-echo "services:
+# Crear el archivo compose.yml
+# Usamos 'EOF' con comillas para que no intente expandir las variables de Docker ahora mismo
+sudo bash -c "cat << 'EOF' > compose.yml
+services:
   api:
     image: inina14/api-restfull-transacciones:$hostname
     container_name: transacciones-api
     restart: unless-stopped
     depends_on:
-      - sqlserver
-       # condition: service_healthy
+      sqlserver:
+        condition: service_healthy
     environment:
-      ASPNETCORE_ENVIRONMENT: "production"
-      ASPNETCORE_URLS: "http://+:5035"
-      JWT_SECRET_KEY: "${JWT_SECRET_KEY}"
-      ConnectionStrings__TransaccionesConnection: "Server=sqlserver,1433;Database=DB_TRANSACCIONES;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;"
+      ASPNETCORE_ENVIRONMENT: \"production\"
+      ASPNETCORE_URLS: \"http://+:5035\"
+      JWT_SECRET_KEY: \"\${JWT_SECRET_KEY}\"
+      ConnectionStrings__TransaccionesConnection: \"Server=sqlserver,1433;Database=DB_TRANSACCIONES;User Id=sa;Password=\${MSSQL_SA_PASSWORD};TrustServerCertificate=True;\"
     ports:
-      - "80:5035"
+      - \"80:5035\"
 
   sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    image: ://microsoft.com
     container_name: transacciones-sqlserver
     restart: unless-stopped
     environment:
-      ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD}"
-      MSSQL_PID: "Developer"
+      ACCEPT_EULA: \"Y\"
+      MSSQL_SA_PASSWORD: \"\${MSSQL_SA_PASSWORD}\"
+      MSSQL_PID: \"Developer\"
     ports:
-      - "1433:1433"
+      - \"1433:1433\"
     healthcheck:
-      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-U", "sa", "-P", "${MSSQL_SA_PASSWORD}", "-Q", "SELECT 1"]
+      test: [\"CMD\", \"/opt/mssql-tools/bin/sqlcmd\", \"-U\", \"sa\", \"-P\", \"\${MSSQL_SA_PASSWORD}\", \"-Q\", \"SELECT 1\"]
       interval: 30s
-      timeout: 20s # Espera 10 seg por la respuesta
-      retries: 10 # Intenta hasta 15 veces (3-4 minutos de margen total)
-      start_period: 150s  # <--- CRÍTICO: No lo marques como "unhealthy" durante los primeros 40s
+      timeout: 20s
+      retries: 10
+      start_period: 150s
     volumes:
-      - sqlserver_data:/var/opt/mssql ##
+      - sqlserver_data:/var/opt/mssql
 
 volumes:
   sqlserver_data:
-" > compose.yml
+EOF"
 
+# 4. Levantar los contenedores en segundo plano
+echo "Desplegando contenedores..."
+sudo docker compose up -d
+echo "¡Despliegue finalizado!"
