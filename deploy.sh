@@ -1,25 +1,8 @@
 #!/bin/bash
-
-# Configuración para depuración y robustez:
-# -e: Salir inmediatamente si un comando falla.
-# -u: Tratar las variables no definidas como un error y salir.
-# -x: Imprimir los comandos y sus argumentos a medida que se ejecutan.
-# -o pipefail: Asegurar que el estado de salida de una tubería sea el del último comando que falló.
-set -euxo pipefail
-
-echo "--- Iniciando script deploy.sh ---"
-
-# Obtener el hostname para el tag de la imagen
-hostname=$(curl -s http://169.254.169.254/metadata/v1/hostname)
-echo "Hostname detectado: $hostname"
-
+hostname=$(curl http://169.254.169.254/metadata/v1/hostname)
 mkdir -p /home/deploy
 cd /home/deploy
-
-# Usar un "heredoc" para escribir el archivo compose.yml de forma más robusta
-# Las variables de entorno se expandirán aquí
-cat << EOF > compose.yml
-services:
+echo "services:
   api:
     image: inina14/api-restfull-transacciones:$hostname
     container_name: transacciones-api
@@ -50,18 +33,11 @@ services:
       interval: 30s
       timeout: 20s # Espera 10 seg por la respuesta
       retries: 10 # Intenta hasta 15 veces (3-4 minutos de margen total)
-      start_period: 150s  # <--- No lo marques como "unhealthy" durante los primeros 150s
+      start_period: 150s  # <--- CRÍTICO: No lo marques como "unhealthy" durante los primeros 40s
     volumes:
       - sqlserver_data:/var/opt/mssql ##
 
 volumes:
   sqlserver_data:
-EOF
+" > compose.yml
 
-echo "Archivo compose.yml creado. Contenido:"
-cat compose.yml
-echo "--- Fin del contenido de compose.yml ---"
-
-docker compose up -d
-
-echo "--- Script deploy.sh finalizado ---"
