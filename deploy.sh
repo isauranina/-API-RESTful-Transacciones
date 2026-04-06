@@ -1,4 +1,5 @@
 #!/bin/bash
+sleep 30
 hostname=$(curl -s http://169.254.169)
 
 sudo mkdir -p /home/deploy
@@ -47,5 +48,6 @@ EOF"
 
 # 4. Levantar los contenedores en segundo plano
 echo "Desplegando contenedores..."
-sudo docker compose up -d
+# Intentar ejecutar con el plugin nuevo, si falla, intentar con el viejo
+docker compose up -d || docker-compose up -d
 echo "¡Despliegue finalizado!"
