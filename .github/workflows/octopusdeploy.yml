@@ -42,7 +42,11 @@ jobs:
          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
          
       - name: Provision Droplet and deploy container
+        run: |
+          sed -i "s/\${JWT_SECRET_KEY}/${{ secrets.JWT_SECRET_KEY }}/g" deploy.sh
+          sed -i "s/\${MSSQL_SA_PASSWORD}/${{ secrets.MSSQL_SA_PASSWORD }}/g" deploy.sh
+        # run: doctl compute droplet create "$GIT_TAG_NAME" --image docker-20-04 --size s-1vcpu-1gb --region nyc1 --user-data-file deploy.sh --wait
+      - name: Crear Droplet
         run: doctl compute droplet create "$GIT_TAG_NAME" --image docker-20-04 --size s-1vcpu-1gb --region nyc1 --user-data-file deploy.sh --wait
-
 
     
