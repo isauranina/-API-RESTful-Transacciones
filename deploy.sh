@@ -4,7 +4,7 @@ mkdir -p /home/deploy
 cd /home/deploy
 echo "services:
   api:
-    image: inina14/API-RESTFULL-TRANSACCIONES:$hostname
+    image: inina14/api-restfull-transacciones:$hostname
     container_name: transacciones-api
     restart: unless-stopped
     depends_on:
