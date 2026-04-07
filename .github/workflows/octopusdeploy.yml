@@ -49,6 +49,12 @@ jobs:
           sed -i "s|__JWT_SECRET__|${{ secrets.JWT_SECRET_KEY }}|g" deploy.sh
           sed -i "s|__MSSQL_SA_PASSWORD__|${{ secrets.MSSQL_SA_PASSWORD }}|g" deploy.sh
       - name: Crear Droplet
-        run: doctl compute droplet create "$GIT_TAG_NAME" --image docker-20-04 --size s-1vcpu-8gb --region nyc1 --user-data-file deploy.sh --wait
+        run: | # doctl compute droplet create "$GIT_TAG_NAME" --image docker-20-04 --size s-1vcpu-8gb --region nyc1 --user-data-file deploy.sh --wait
+          doctl compute droplet create "${GIT_TAG_NAME}" \
+            --region nyc3 \
+            --size s-2vcpu-8gb \
+            --image docker-22-04 \
+            --user-data-file deploy.sh \
+            --wait
 
     
