@@ -14,12 +14,12 @@ services:
     restart: unless-stopped
     depends_on:
       sqlserver:
-        condition: service_healthy
+        condition: service_started
     environment:
       ASPNETCORE_ENVIRONMENT: "production"
       ASPNETCORE_URLS: "http://+:5035"
       JWT_SECRET_KEY: "__JWT_SECRET__"
-      ConnectionStrings__TransaccionesConnection: "Server=sqlserver,1433;Database=DB_TRANSACCIONES;User Id=sa;Password=__MSSQL_SA_PASSWORD__;TrustServerCertificate=True;"
+      ConnectionStrings__TransaccionesConnection: "Server=sqlserver,1433;Database=DB_TRANSACCIONES;User Id=sa;Password=__MSSQL_SA_PASSWORD__;TrustServerCertificate=True;Connect Timeout=120;"
     ports:
       - "80:5035"
 
@@ -33,12 +33,18 @@ services:
       MSSQL_PID: "Developer"
     ports:
       - "1433:1433"
+    # $$ en Compose se convierte en $ para el contenedor: la contraseña sale de MSSQL_SA_PASSWORD (no del host).
+    # Prueba tools18 y luego tools (imagen 2022).
     healthcheck:
-      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-C", "-S", "localhost", "-U", "sa", "-P", "__MSSQL_SA_PASSWORD__", "-Q", "SELECT 1"]
-      interval: 30s
-      timeout: 20s
-      retries: 10
-      start_period: 150s
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q 'SELECT 1' || /opt/mssql-tools/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q 'SELECT 1' || exit 1",
+        ]
+      interval: 15s
+      timeout: 25s
+      retries: 15
+      start_period: 240s
     volumes:
       - sqlserver_data:/var/opt/mssql
 
