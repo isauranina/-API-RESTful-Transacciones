@@ -51,30 +51,34 @@ jobs:
       - name: Crear Droplet
         run: |
           REGION="nyc3"
-          IMAGE="docker-22-04"
-          CANDIDATES=("s-2vcpu-8gb-intel" "s-2vcpu-8gb-amd" "s-2vcpu-8gb")
+          # Confirmado por tu salida: 8GB/2vCPU/160GB Intel
+          SIZE="s-2vcpu-8gb-160gb-intel"
+          # Fallbacks porque el slug de imagen Docker cambia por cuenta/región.
+          IMAGES=("docker-22-04" "docker-20-04")
 
           echo "Sizes globales disponibles (referencia 2vCPU/8GB):"
           doctl compute size list --format Slug,Memory,VCPUs,Disk --no-header | grep -E "2vcpu|8192|8gb" || true
 
           CREATED=0
-          for SIZE in "${CANDIDATES[@]}"; do
-            echo "Intentando crear Droplet con size='${SIZE}'..."
+          for IMAGE in "${IMAGES[@]}"; do
+            echo "Intentando crear Droplet con size='${SIZE}' e image='${IMAGE}'..."
             if doctl compute droplet create "${GIT_TAG_NAME}" \
               --region "${REGION}" \
               --size "${SIZE}" \
               --image "${IMAGE}" \
               --user-data-file deploy.sh \
               --wait; then
-              echo "Droplet creado con size '${SIZE}'."
+              echo "Droplet creado con size '${SIZE}' e image '${IMAGE}'."
               CREATED=1
               break
             fi
-            echo "No se pudo crear con size '${SIZE}', probando siguiente..."
+            echo "No se pudo crear con image='${IMAGE}', probando siguiente..."
           done
 
           if [ "${CREATED}" -ne 1 ]; then
-            echo "ERROR: no se pudo crear Droplet con ninguno de los slugs candidatos."
+            echo "ERROR: no se pudo crear Droplet con size='${SIZE}' y ninguna imagen candidata."
+            echo "Imágenes Docker públicas disponibles (referencia):"
+            doctl compute image list --public --format Slug,Distribution,Name --no-header | grep -i docker || true
             exit 1
           fi
 
