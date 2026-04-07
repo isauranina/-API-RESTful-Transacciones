@@ -40,9 +40,7 @@ jobs:
         uses: digitalocean/action-doctl@v2
         with:
          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-         
-      # Placeholders en deploy.sh: __IMAGE_TAG__, __JWT_SECRET__, __MSSQL_SA_PASSWORD__
-      # Usar | en sed para que contraseñas con / no rompan el comando.
+
       - name: Preparar deploy.sh (tag + secretos)
         run: |
           sed -i "s|__IMAGE_TAG__|${GIT_TAG_NAME}|g" deploy.sh
@@ -51,35 +49,18 @@ jobs:
       - name: Crear Droplet
         run: |
           REGION="nyc3"
-          # Confirmado por tu salida: 8GB/2vCPU/160GB Intel
           SIZE="s-2vcpu-8gb-160gb-intel"
-          # Fallbacks porque el slug de imagen Docker cambia por cuenta/región.
-          IMAGES=("docker-22-04" "docker-20-04")
-
-          echo "Sizes globales disponibles (referencia 2vCPU/8GB):"
-          doctl compute size list --format Slug,Memory,VCPUs,Disk --no-header | grep -E "2vcpu|8192|8gb" || true
-
-          CREATED=0
-          for IMAGE in "${IMAGES[@]}"; do
-            echo "Intentando crear Droplet con size='${SIZE}' e image='${IMAGE}'..."
-            if doctl compute droplet create "${GIT_TAG_NAME}" \
-              --region "${REGION}" \
-              --size "${SIZE}" \
-              --image "${IMAGE}" \
-              --user-data-file deploy.sh \
-              --wait; then
-              echo "Droplet creado con size '${SIZE}' e image '${IMAGE}'."
-              CREATED=1
-              break
-            fi
-            echo "No se pudo crear con image='${IMAGE}', probando siguiente..."
-          done
-
-          if [ "${CREATED}" -ne 1 ]; then
-            echo "ERROR: no se pudo crear Droplet con size='${SIZE}' y ninguna imagen candidata."
-            echo "Imágenes Docker públicas disponibles (referencia):"
-            doctl compute image list --public --format Slug,Distribution,Name --no-header | grep -i docker || true
-            exit 1
-          fi
+          doctl compute droplet create "${GIT_TAG_NAME}" \
+            --region "${REGION}" \
+            --size "${SIZE}" \
+            --image "docker-22-04" \
+            --user-data-file deploy.sh \
+            --wait || \
+          doctl compute droplet create "${GIT_TAG_NAME}" \
+            --region "${REGION}" \
+            --size "${SIZE}" \
+            --image "docker-20-04" \
+            --user-data-file deploy.sh \
+            --wait
 
     
