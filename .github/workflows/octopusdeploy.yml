@@ -49,11 +49,23 @@ jobs:
           sed -i "s|__JWT_SECRET__|${{ secrets.JWT_SECRET_KEY }}|g" deploy.sh
           sed -i "s|__MSSQL_SA_PASSWORD__|${{ secrets.MSSQL_SA_PASSWORD }}|g" deploy.sh
       - name: Crear Droplet
-        run: | # doctl compute droplet create "$GIT_TAG_NAME" --image docker-20-04 --size s-1vcpu-8gb --region nyc1 --user-data-file deploy.sh --wait
+        run: |
+          REGION="nyc3"
+          IMAGE="docker-22-04"
+          SIZE="s-2vcpu-8gb-intel"
+
+          echo "Verificando size '${SIZE}' en region '${REGION}'..."
+          if ! doctl compute size list --format Slug --no-header --region "${REGION}" | grep -Fxq "${SIZE}"; then
+            echo "ERROR: size slug no disponible: ${SIZE}"
+            echo "Sizes disponibles en ${REGION} (filtro 2vcpu/8gb):"
+            doctl compute size list --format Slug,Memory,Vcpus,Disk --no-header --region "${REGION}" | grep -E "2vcpu|8192|8gb" || true
+            exit 1
+          fi
+
           doctl compute droplet create "${GIT_TAG_NAME}" \
-            --region nyc3 \
-            --size s-2vcpu-8gb \
-            --image docker-22-04 \
+            --region "${REGION}" \
+            --size "${SIZE}" \
+            --image "${IMAGE}" \
             --user-data-file deploy.sh \
             --wait
 
