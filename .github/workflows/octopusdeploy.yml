@@ -52,21 +52,30 @@ jobs:
         run: |
           REGION="nyc3"
           IMAGE="docker-22-04"
-          SIZE="s-2vcpu-8gb-intel"
+          CANDIDATES=("s-2vcpu-8gb-intel" "s-2vcpu-8gb-amd" "s-2vcpu-8gb")
 
-          echo "Verificando size '${SIZE}' en region '${REGION}'..."
-          if ! doctl compute size list --format Slug --no-header --region "${REGION}" | grep -Fxq "${SIZE}"; then
-            echo "ERROR: size slug no disponible: ${SIZE}"
-            echo "Sizes disponibles en ${REGION} (filtro 2vcpu/8gb):"
-            doctl compute size list --format Slug,Memory,Vcpus,Disk --no-header --region "${REGION}" | grep -E "2vcpu|8192|8gb" || true
+          echo "Sizes globales disponibles (referencia 2vCPU/8GB):"
+          doctl compute size list --format Slug,Memory,VCPUs,Disk --no-header | grep -E "2vcpu|8192|8gb" || true
+
+          CREATED=0
+          for SIZE in "${CANDIDATES[@]}"; do
+            echo "Intentando crear Droplet con size='${SIZE}'..."
+            if doctl compute droplet create "${GIT_TAG_NAME}" \
+              --region "${REGION}" \
+              --size "${SIZE}" \
+              --image "${IMAGE}" \
+              --user-data-file deploy.sh \
+              --wait; then
+              echo "Droplet creado con size '${SIZE}'."
+              CREATED=1
+              break
+            fi
+            echo "No se pudo crear con size '${SIZE}', probando siguiente..."
+          done
+
+          if [ "${CREATED}" -ne 1 ]; then
+            echo "ERROR: no se pudo crear Droplet con ninguno de los slugs candidatos."
             exit 1
           fi
-
-          doctl compute droplet create "${GIT_TAG_NAME}" \
-            --region "${REGION}" \
-            --size "${SIZE}" \
-            --image "${IMAGE}" \
-            --user-data-file deploy.sh \
-            --wait
 
     
