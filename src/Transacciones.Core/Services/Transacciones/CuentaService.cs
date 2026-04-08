@@ -13,7 +13,6 @@ namespace Transacciones.Core.Services.Transacciones;
 public class CuentaService : ICuentaService {
 	private readonly ICuentaRepository _cuentaRepository;
 	private readonly IMapper _mapper;
-	private readonly ITransaccionesDbContext _context;
 
 	public CuentaService(
 		ICuentaRepository cuentaRepository,
@@ -21,7 +20,6 @@ public class CuentaService : ICuentaService {
 		ITransaccionesDbContext context) {
 		_cuentaRepository = cuentaRepository;
 		_mapper = mapper;
-		_context = context;
 	}
 
 	public async Task<CuentaDto?> GetByIdAsync(int id) {
