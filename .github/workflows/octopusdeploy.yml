@@ -1,0 +1,66 @@
+name: Staging to digitalocean
+
+on:
+  push:
+    tags:
+    - stage-*
+
+jobs: 
+  build:
+   
+    runs-on: ubuntu-latest
+   
+    steps:
+      - name: Checkout files    
+        uses: actions/checkout@v2
+      - name: Copy Docker file
+        run: cp ${{ github.workspace }}/docker-deploy/Dockerfile ${{ github.workspace }}/Dockerfile
+      - name: Build and push Docker images
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: inina14/api-restfull-transacciones
+          tag_with_ref: true
+          tag_with_sha: true
+        
+  deploy:
+    needs: build
+    
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout files    
+        uses: actions/checkout@v2
+        
+      - name: Get tag name
+        uses: olegtarasov/get-tag@v2.1
+        
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+         token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Preparar deploy.sh (tag + secretos)
+        run: |
+          sed -i "s|__IMAGE_TAG__|${GIT_TAG_NAME}|g" deploy.sh
+          sed -i "s|__JWT_SECRET__|${{ secrets.JWT_SECRET_KEY }}|g" deploy.sh
+          sed -i "s|__MSSQL_SA_PASSWORD__|${{ secrets.MSSQL_SA_PASSWORD }}|g" deploy.sh
+      - name: Crear Droplet
+        run: |
+          REGION="nyc3"
+          SIZE="s-2vcpu-8gb-160gb-intel"
+          doctl compute droplet create "${GIT_TAG_NAME}" \
+            --region "${REGION}" \
+            --size "${SIZE}" \
+            --image "docker-22-04" \
+            --user-data-file deploy.sh \
+            --wait || \
+          doctl compute droplet create "${GIT_TAG_NAME}" \
+            --region "${REGION}" \
+            --size "${SIZE}" \
+            --image "docker-20-04" \
+            --user-data-file deploy.sh \
+            --wait
+
+    

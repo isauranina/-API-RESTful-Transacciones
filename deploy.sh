@@ -1,20 +1,25 @@
 #!/bin/bash
-hostname=$(curl http://169.254.169.254/metadata/v1/hostname)
-mkdir -p /home/deploy
+set -e
+sleep 30
+
+# Los placeholders __IMAGE_TAG__, __JWT_SECRET__ y __MSSQL_SA_PASSWORD__ los reemplaza el workflow con sed antes de user-data.
+sudo mkdir -p /home/deploy
 cd /home/deploy
-echo "services:
+
+sudo tee compose.yml > /dev/null <<'DEPLOY_COMPOSE_EOF'
+services:
   api:
-    image: inina14/API-RESTFULL-TRANSACCIONES:$hostname
+    image: inina14/api-restfull-transacciones:__IMAGE_TAG__
     container_name: transacciones-api
     restart: unless-stopped
     depends_on:
-      - sqlserver
-       # condition: service_healthy
+      sqlserver:
+        condition: service_started
     environment:
       ASPNETCORE_ENVIRONMENT: "production"
       ASPNETCORE_URLS: "http://+:5035"
-      JWT_SECRET_KEY: "${JWT_SECRET_KEY}"
-      ConnectionStrings__TransaccionesConnection: "Server=sqlserver,1433;Database=DB_TRANSACCIONES;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;"
+      JWT_SECRET_KEY: "__JWT_SECRET__"
+      ConnectionStrings__TransaccionesConnection: "Server=sqlserver,1433;Database=DB_TRANSACCIONES;User Id=sa;Password=__MSSQL_SA_PASSWORD__;TrustServerCertificate=True;Connect Timeout=120;"
     ports:
       - "80:5035"
 
@@ -24,20 +29,29 @@ echo "services:
     restart: unless-stopped
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD}"
+      MSSQL_SA_PASSWORD: "__MSSQL_SA_PASSWORD__"
       MSSQL_PID: "Developer"
     ports:
       - "1433:1433"
+    # $$ en Compose se convierte en $ para el contenedor: la contraseña sale de MSSQL_SA_PASSWORD (no del host).
+    # Prueba tools18 y luego tools (imagen 2022).
     healthcheck:
-      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-U", "sa", "-P", "${MSSQL_SA_PASSWORD}", "-Q", "SELECT 1"]
-      interval: 30s
-      timeout: 20s # Espera 10 seg por la respuesta
-      retries: 10 # Intenta hasta 15 veces (3-4 minutos de margen total)
-      start_period: 150s  # <--- CRÍTICO: No lo marques como "unhealthy" durante los primeros 40s
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q 'SELECT 1' || /opt/mssql-tools/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q 'SELECT 1' || exit 1",
+        ]
+      interval: 15s
+      timeout: 25s
+      retries: 15
+      start_period: 240s
     volumes:
-      - sqlserver_data:/var/opt/mssql ##
+      - sqlserver_data:/var/opt/mssql
 
 volumes:
   sqlserver_data:
-" > docker-compose.yml
-docker docker-compose up -d
+DEPLOY_COMPOSE_EOF
+
+echo "Desplegando contenedores..."
+docker compose -f compose.yml up -d || docker-compose -f compose.yml up -d
+echo "¡Despliegue finalizado!"
