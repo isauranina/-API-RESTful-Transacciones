@@ -1,8 +1,12 @@
 using System.Text;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
+using Serilog.Sinks.Grafana.Loki;
 using Transacciones.API;
 using Transacciones.API.Ioc;
 using Transacciones.API.Middlewares;
@@ -10,6 +14,21 @@ using Transacciones.Core.Mappings;
 using Transacciones.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var lokiUrl =
+	Environment.GetEnvironmentVariable("LOKI_URL")
+	?? builder.Configuration["Loki:Url"]
+	?? "http://localhost:3100";
+
+builder.Host.UseSerilog((context, services, loggerConfiguration) => loggerConfiguration
+	.ReadFrom.Configuration(context.Configuration)
+	.ReadFrom.Services(services)
+	.Enrich.FromLogContext()
+	.Enrich.WithMachineName()
+	.Enrich.WithProcessId()
+	.Enrich.WithThreadId()
+	.WriteTo.Console()
+	.WriteTo.GrafanaLoki(lokiUrl));
 
 // Add services to the container.
 
@@ -70,6 +89,10 @@ builder.Services.AddDbContext<TransaccionesDbContext>(options =>
 		sqlOptions => sqlOptions.MigrationsAssembly("Transacciones.Infrastructure")
 	));
 
+builder.Services.AddHealthChecks()
+	.AddCheck("live", () => HealthCheckResult.Healthy(), tags: ["live"])
+	.AddDbContextCheck<TransaccionesDbContext>(tags: ["ready"]);
+
 builder.Services.AddCors(options => options.AddPolicy("CorsPolicy", builder =>
 		builder
 			.WithOrigins("http://localhost:4200", "*")
@@ -123,6 +146,8 @@ builder.WebHost.UseUrls("http://0.0.0.0:5035");
 
 var app = builder.Build();
 
+app.UseSerilogRequestLogging();
+
 app.UseCors("CorsPolicy");
 
 // Middleware
@@ -141,6 +166,15 @@ app.UseSwaggerUI(options => {
 //app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapHealthChecks("/health/live", new HealthCheckOptions {
+	Predicate = r => r.Tags.Contains("live")
+}).AllowAnonymous();
+
+app.MapHealthChecks("/health/ready", new HealthCheckOptions {
+	Predicate = r => r.Tags.Contains("ready")
+}).AllowAnonymous();
+
 app.MapControllers();
 
 //if (app.Environment.IsProduction()) {

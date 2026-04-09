@@ -14,14 +14,25 @@ services:
     restart: unless-stopped
     depends_on:
       sqlserver:
-        condition: service_started
+        condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: "production"
       ASPNETCORE_URLS: "http://+:5035"
       JWT_SECRET_KEY: "__JWT_SECRET__"
+      LOKI_URL: "http://localhost:3100"
       ConnectionStrings__TransaccionesConnection: "Server=sqlserver,1433;Database=DB_TRANSACCIONES;User Id=sa;Password=__MSSQL_SA_PASSWORD__;TrustServerCertificate=True;Connect Timeout=120;"
     ports:
       - "80:5035"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://127.0.0.1:5035/health/live || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
 
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
