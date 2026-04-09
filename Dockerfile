@@ -35,6 +35,11 @@ RUN dotnet publish "./src/Transacciones.API/Transacciones.API.csproj" \
 
   # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
+USER root
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends curl \
+  && rm -rf /var/lib/apt/lists/*
+USER app
 WORKDIR /app
 # FORZAR EL PUERTO 5035
 ENV ASPNETCORE_URLS=http://+:5035
